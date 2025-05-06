@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Collections</h1>
+            <p class="lead">Browse themed collections of board games</p>
+        </div>
+        {% if is_authenticated %}
+        <div class="col-auto">
+            <a href="{% url 'add_collection' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create Collection
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% for message in messages %}
+        {% if forloop.last %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}  
+    
+    <!-- Search and Filter form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="mb-0">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search collections..." value="{{ search_query }}">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3 d-flex justify-content-end">
+                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                            <i class="bi bi-funnel"></i> Filters
+                        </button>
+                    </div>
+                </div>
+
+                <div class="collapse" id="filterCollapse">
+                    <div class="row mt-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="visibility" class="form-label">Visibility</label>
+                            <select name="visibility" id="visibility" class="form-select">
+                                <option value="">All</option>
+                                <option value="public" {% if selected_visibility == 'public' %}selected{% endif %}>Public</option>
+                                <option value="private" {% if selected_visibility == 'private' %}selected{% endif %}>Private</option>
+                            </select>
+                        </div>  
+                        <div class="col-md-4 mb-3">
+                            <label for="creator" class="form-label">Created By</label>
+                            <select name="creator" id="creator" class="form-select">
+                                <option value="">All Creators</option>
+                                {% for creator in creators %}
+                                    <option value="{{ creator.id }}" {% if creator_filter|default:'' == creator.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ creator.get_full_name|default:creator.email }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'collection_list' %}" class="btn btn-outline-secondary me-2">Reset Filters</a>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Collections list -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for collection in collections %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ collection.title }}</h5>
+                    {% if collection.is_private %}
+                    <span class="badge bg-secondary">Private</span>
+                    {% else %}
+                    <span class="badge bg-success">Public</span>
+                    {% endif %}
+                    <p class="card-text text-muted">Created by: {{ collection.creator.get_full_name }}</p>
+                    <p class="card-text">{{ collection.description|truncatechars:100 }}</p>
+                    <p class="card-text"><small class="text-muted">{{ collection.games.count }} games</small></p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'collection_detail' pk=collection.pk %}" class="btn btn-outline-primary btn-sm">View Collection</a>
+                    {% if collection.is_private and is_authenticated and not is_librarian and collection.creator != user %}
+                    <form method="post" action="{% url 'request_collection_access' pk=collection.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">Request Access</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                {% if search_query %}
+                No collections found matching "{{ search_query }}".
+                {% else %}
+                No collections available.
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

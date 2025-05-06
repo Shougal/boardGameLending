@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Board Game Catalogue</h1>
+    
+    <!-- Search and Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{% url 'board_game_catalogue' %}" class="mb-0">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search games..." value="{{ search_query }}">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                                <i class="bi bi-funnel"></i> Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapse" id="filterCollapse">
+                    <div class="row mt-3">
+                        <div class="col-md-3 mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select name="category" id="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.name }}" {% if selected_category == category.name %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="complexity" class="form-label">Complexity</label>
+                            <select name="complexity" id="complexity" class="form-select">
+                                <option value="">Any Complexity</option>
+                                <option value="1" {% if complexity == '1' %}selected{% endif %}>1 - Simple</option>
+                                <option value="2" {% if complexity == '2' %}selected{% endif %}>2 - Easy</option>
+                                <option value="3" {% if complexity == '3' %}selected{% endif %}>3 - Medium</option>
+                                <option value="4" {% if complexity == '4' %}selected{% endif %}>4 - Hard</option>
+                                <option value="5" {% if complexity == '5' %}selected{% endif %}>5 - Complex</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="players" class="form-label">Player Count</label>
+                            <input type="number" name="players" id="players" class="form-control" min="1" value="{{ players }}" placeholder="Number of players">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="availability" class="form-label">Availability</label>
+                            <select name="availability" id="availability" class="form-select">
+                                <option value="">All Games</option>
+                                <option value="available" {% if availability == 'available' %}selected{% endif %}>Available Now</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-2">
+                        <a href="{% url 'board_game_catalogue' %}" class="btn btn-outline-secondary me-2">Reset Filters</a>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Results Display -->
+    <div class="row">
+        {% if games %}
+            {% for game in games %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <img src="{{ game.get_image_url }}" class="card-img-top" alt="{{ game.title }}" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ game.title }}</h5>
+                        
+                        <div class="mb-2">
+                            <span class="badge bg-primary">{{ game.min_players }}-{{ game.max_players }} Players</span>
+                            {% if game.playing_time %}
+                            <span class="badge bg-secondary">{{ game.playing_time }} min</span>
+                            {% endif %}
+                            {% if game.complexity %}
+                            <span class="badge bg-info">Complexity: {{ game.complexity }}/5</span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="card-text text-truncate">{{ game.description }}</p>
+                        
+                        {% if game.categories.all %}
+                        <div class="mb-2">
+                            {% for category in game.categories.all %}
+                            <a href="?category={{ category.name }}" class="badge bg-secondary text-decoration-none">{{ category.name }}</a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'board_game_detail' game.pk %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                            <span class="{% if game.is_available %}text-success{% else %}text-danger{% endif %}">
+                                {% if game.is_available %}
+                                Available ({{ game.available_copies_count }})
+                                {% else %}
+                                Not Available
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <h3>No board games found matching your criteria</h3>
+                <p>Try adjusting your search or filters</p>
+                <a href="{% url 'board_game_catalogue' %}" class="btn btn-primary">Clear Search</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Pagination could be added here if needed -->
+</div>
+
+{% endblock %}

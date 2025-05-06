@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">{{ action }} Board Game</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="row g-3">
+                          <div class="col-md-6">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ form.title.value|default:'' }}" required>
+                            {% if form.title.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.title.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-md-6">
+                            <label for="image" class="form-label">Image</label>
+                            <input type="file" class="form-control" id="image" name="image">
+                            {% if form.image.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.image.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
+                            {% if form.description.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.description.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-12 mb-3">
+                            <label for="categories" class="form-label">Categories</label>
+                            <select multiple class="form-select" id="categories" name="categories">
+                              {% for category in form.categories.field.queryset %}
+                                <option value="{{ category.id }}" {% if category in categories %}selected{% endif %}>
+                                  {{ category.name }}
+                                </option>
+                              {% endfor %}
+                            </select>
+                            {% if form.categories.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.categories.errors }}
+                              </div>
+                            {% endif %}
+                          </div>                          
+                          <div class="col-md-3">
+                            <label for="minPlayers" class="form-label">Min Players</label>
+                            <input type="number" class="form-control" id="minPlayers" name="min_players" value="{{ form.min_players.value|default:'1' }}" min="1">
+                            {% if form.min_players.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.min_players.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-md-3">
+                            <label for="maxPlayers" class="form-label">Max Players</label>
+                            <input type="number" class="form-control" id="maxPlayers" name="max_players" value="{{ form.max_players.value|default:'1' }}" min="1">
+                            {% if form.max_players.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.max_players.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-md-6">
+                            <label for="playingTime" class="form-label">Playing Time (minutes)</label>
+                            <input type="number" class="form-control" id="playingTime" name="playing_time" value="{{ form.playing_time.value|default:'30' }}" min="1">
+                            {% if form.playing_time.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.playing_time.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-md-6">
+                            <label for="complexity" class="form-label">Complexity (1-5)</label>
+                            <input type="range" class="form-range" id="complexity" name="complexity" min="1" max="5" value="{{ form.complexity.value|default:'3' }}">
+                            <div class="text-center" id="complexityValue">{{ form.complexity.value|default:'3' }}</div>
+                            {% if form.complexity.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.complexity.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-md-6">
+                            <label for="numCopies" class="form-label">Number of Copies</label>
+                            <input type="number" class="form-control" id="numCopies" name="num_copies" value="{{ form.num_copies.value|default:'1' }}" min="1">
+                            {% if form.num_copies.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.num_copies.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                          <div class="col-md-6">
+                            <label for="defaultPickupLocation" class="form-label">Pickup Location</label>
+                            <select class="form-select" id="defaultPickupLocation" name="default_pickup_location">
+                              {% for value, name in form.fields.default_pickup_location.choices %}
+                                <option value="{{ value }}" {% if value == form.default_pickup_location.value %}selected{% endif %}>
+                                  {{ name }}
+                                </option>
+                              {% endfor %}
+                            </select>
+                            <div class="form-text">{{ form.fields.default_pickup_location.help_text }}</div>
+                            {% if form.default_pickup_location.errors %}
+                              <div class="invalid-feedback d-block">
+                                {{ form.default_pickup_location.errors }}
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                        <div class="mt-3">
+                          <button class="btn btn-primary" type="submit">Save Board Game</button>
+                          <a href="{% url 'manage_board_games' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                      </form>                      
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  // Update complexity value display
+  // adding a bit of js to do this since its pretty simple client-side stuff
+  document.getElementById('complexity').addEventListener('input', function() {
+    document.getElementById('complexityValue').textContent = this.value;
+  });
+  
+  (function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+          form.classList.add('was-validated')
+        }, false)
+      })
+  })()
+</script>
+{% endblock %}

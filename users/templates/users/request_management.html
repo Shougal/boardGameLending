@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4">Manage Requests</h1>
+
+  <!-- Borrow Requests Section -->
+  <div class="card mb-5">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h4 mb-0">Borrow Requests</h2>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Borrower</th>
+            <th scope="col">Game</th>
+            <th scope="col">Status</th>
+            <th scope="col">Requested</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in borrow_requests %}
+          <tr>
+            <th scope="row">{{ req.id }}</th>
+            <td>{{ req.user.get_full_name|default:req.user.email }}</td>
+            <td>{{ req.game.title }}</td>
+            <td>
+              {% if req.status == 'pending' %}
+                <span class="badge text-bg-warning">Pending</span>
+              {% elif req.status == 'approved' %}
+                <span class="badge text-bg-success">Approved</span>
+              {% elif req.status == 'denied' %}
+                <span class="badge text-bg-danger">Denied</span>
+              {% endif %}
+            </td>
+            <td>{{ req.requested_at|date:"Y-m-d H:i" }}</td>
+            <td class="text-end">
+              <form method="POST" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="request_type" value="borrow">
+                <input type="hidden" name="request_id" value="{{ req.id }}">
+                <button class="btn btn-success btn-sm" name="action" value="approve">Approve</button>
+                <button class="btn btn-danger btn-sm" name="action" value="deny">Deny</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Collection Access Requests Section -->
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h4 mb-0">Collection Access Requests</h2>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Requester</th>
+            <th scope="col">Collection</th>
+            <th scope="col">Status</th>
+            <th scope="col">Requested</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in collection_requests %}
+          <tr>
+            <th scope="row">{{ req.id }}</th>
+            <td>{{ req.user.get_full_name|default:req.user.email }}</td>
+            <td>{{ req.collection.title }}</td>
+            <td>
+              {% if req.status == 'pending' %}
+                <span class="badge text-bg-warning">Pending</span>
+              {% elif req.status == 'approved' %}
+                <span class="badge text-bg-success">Approved</span>
+              {% elif req.status == 'denied' %}
+                <span class="badge text-bg-danger">Denied</span>
+              {% endif %}
+            </td>
+            <td>{{ req.requested_at|date:"Y-m-d H:i" }}</td>
+            <td class="text-end">
+              <form method="POST" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="request_type" value="collection">
+                <input type="hidden" name="request_id" value="{{ req.id }}">
+                <button class="btn btn-success btn-sm" name="action" value="approve">Approve</button>
+                <button class="btn btn-danger btn-sm" name="action" value="deny">Deny</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

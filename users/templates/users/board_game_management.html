@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Board Game Management</h1>
+            {% if is_librarian %}
+                <p class="lead">Manage the library's board game collection</p>
+                <a href="{% url 'add_board_game' %}" class="btn btn-primary mb-3">
+                    <i class="fas fa-plus"></i> Add New Board Game
+                </a>
+            {% else %}
+                <div class="alert alert-danger">
+                    You must be a librarian to access this page.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if is_librarian %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Board Game Collection</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Title</th>
+                                <th>Players</th>
+                                <th>Playing Time</th>
+                                <th>Complexity</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for game in board_games %}
+                                <tr>
+                                    <td>
+                                        <img src="{{ game.get_image_url }}" alt="{{ game.title }}" class="img-thumbnail" style="max-width: 80px;">
+                                    </td>
+                                    <td>{{ game.title }}</td>
+                                    <td>{{ game.min_players }}-{{ game.max_players }}</td>
+                                    <td>{{ game.playing_time|default:"N/A" }} min</td>
+                                    <td>{{ game.complexity|default:"N/A" }}/5</td>
+                                    <td>
+                                        {% if game.is_available %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% elif game.copies.count > 0 %}
+                                            <span class="badge bg-warning">Borrowed</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">No Copies</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ game.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'edit_board_game' game.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ game.pk }}">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Delete Confirmation Modal -->
+                                        <div class="modal fade" id="deleteModal{{ game.pk }}" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Are you sure you want to delete <strong>{{ game.title }}</strong>?
+                                                        {% if not game.is_available %}
+                                                            <div class="alert alert-warning mt-2">
+                                                                Warning: This game is currently borrowed.
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <form action="{% url 'delete_board_game' game.pk %}" method="post">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No board games found in the collection.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

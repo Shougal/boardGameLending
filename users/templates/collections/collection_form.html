@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ action }} Collection</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% if collection %}{% url 'collection_detail' pk=collection.pk %}{% else %}{% url 'collection_list' %}{% endif %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {% bootstrap_field form.title %}
+                    </div>
+                    <div class="col-md-6">
+                        {% bootstrap_field form.visibility %}
+                    </div>
+                </div>
+                
+                {% bootstrap_field form.description %}
+                
+                {% if is_librarian %}
+                <div id="private-settings" class="mb-3 {% if not collection or not collection.is_private %}d-none{% endif %}">
+                    {% bootstrap_field form.authorized_users %}
+                    <div class="form-text">Select users who can access this private collection.</div>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label class="form-label">Games in Collection</label>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <input type="text" id="gameSearch" class="form-control" placeholder="Search for games to add...">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Available Games</h6>
+                                    <div class="list-group" id="availableGames" style="max-height: 300px; overflow-y: auto;">
+                                        {% for game in available_games %}
+                                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ game.title }}</strong>
+                                                <small class="d-block text-muted">Players: {{ game.min_players }}-{{ game.max_players }}</small>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input game-checkbox" type="checkbox" name="games" value="{{ game.id }}" id="game{{ game.id }}"
+                                                    {% if collection and game in selected_games %}checked{% endif %}>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="list-group-item">No games available</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Selected Games</h6>
+                                    <div class="list-group" id="selectedGames" style="max-height: 300px; overflow-y: auto;">
+                                        <div class="list-group-item text-center" id="noSelectedGames">
+                                            No games selected
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        Save Collection
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide private collection settings
+    document.addEventListener('DOMContentLoaded', function() {
+        const visibilitySelect = document.querySelector('select[name="visibility"]');
+        const privateSettings = document.getElementById('private-settings');
+        
+        if (visibilitySelect) {
+            visibilitySelect.addEventListener('change', function() {
+                if (this.value === 'private') {
+                    privateSettings.classList.remove('d-none');
+                } else {
+                    privateSettings.classList.add('d-none');
+                }
+            });
+        }
+        
+        // Game selection functionality
+        const gameCheckboxes = document.querySelectorAll('.game-checkbox');
+        const noSelectedGamesElement = document.getElementById('noSelectedGames');
+        const selectedGamesContainer = document.getElementById('selectedGames');
+        const gameSearch = document.getElementById('gameSearch');
+        
+        // Initialize selected games
+        updateSelectedGames();
+        
+        // Add event listeners to checkboxes
+        gameCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedGames);
+        });
+        
+        // Search functionality
+        if (gameSearch) {
+            gameSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const gameItems = document.querySelectorAll('#availableGames .list-group-item');
+                
+                gameItems.forEach(item => {
+                    const gameTitle = item.querySelector('strong')?.textContent.toLowerCase() || '';
+                    if (gameTitle.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        function updateSelectedGames() {
+            const selectedCheckboxes = document.querySelectorAll('.game-checkbox:checked');
+
+            // Clear all children
+            selectedGamesContainer.innerHTML = '';
+
+            if (selectedCheckboxes.length === 0) {
+                selectedGamesContainer.appendChild(noSelectedGamesElement);
+                noSelectedGamesElement.style.display = '';
+            } else {
+                selectedCheckboxes.forEach(checkbox => {
+                    const gameItem = checkbox.closest('.list-group-item').cloneNode(true);
+                    gameItem.querySelector('.form-check').remove(); // Remove checkbox
+                    selectedGamesContainer.appendChild(gameItem);
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}

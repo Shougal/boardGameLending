@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<main class="flex-grow-1">
+  <!-- Hero Section -->
+  <section class="hero-section text-white d-flex align-items-center mb-5">
+    <div class="container text-center">
+      {% if welcome_message %}
+        <p style="font-weight: bold; font-size: 18px; margin-top: 10px;">
+          {{ welcome_message }}
+        </p>
+      {% endif %}
+      <h1 class="display-4 fw-bold mb-4">Share the Joy of Board Gaming</h1>
+      <p class="lead mb-4">Borrow from our community’s collection or share your own games.</p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a href="/catalogue" class="btn btn-primary btn-lg px-4">Browse Games</a>
+        {% if is_authenticated and is_librarian %}
+        <a href="/board-games/add/" class="btn btn-outline-light btn-lg px-4">Add a Game</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- About / Quick Intro Section -->
+  <section class="py-5">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-md-6">
+          <img 
+            src="{{ board_games_on_table }}" 
+            class="img-fluid rounded-3" 
+            alt="Board games on a table">
+        </div>
+        <div class="col-md-6">
+          <h2 class="mb-4 fw-bold">Why Shelf Share?</h2>
+          <p class="fs-5 mb-4">
+            Shelf Share is your community-driven board game library. Discover 
+            new favorites, connect with other fans, and share the fun. Whether you’re 
+            a casual gamer or a passionate collector, we make it simple to borrow and 
+            lend games through your local library system.
+          </p>
+          <a href="/collections" class="btn btn-primary btn-lg">Explore Collections</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Games -->
+  <section id="featured" class="py-5 bg-light">
+    <div class="container">
+      <h2 class="text-center mb-5 fw-bold">Featured Games</h2>
+      <div class="row g-4">
+        <!-- Example card 1 -->
+        <div class="col-md-4">
+          <div class="card game-card h-100">
+            <img src="{{ catan }}" class="card-img-top" alt="Settlers of Catan">
+            <div class="card-body">
+              <h5 class="card-title">Settlers of Catan</h5>
+              <p class="card-text">A strategy game of resource management and trading.</p>
+            </div>
+          </div>
+        </div>
+        <!-- Example card 2 -->
+        <div class="col-md-4">
+          <div class="card game-card h-100">
+            <img src="{{ ticket_to_ride }}" class="card-img-top" alt="Ticket to Ride">
+            <div class="card-body">
+              <h5 class="card-title">Ticket to Ride</h5>
+              <p class="card-text">Build train routes across the globe in this beloved classic.</p>
+            </div>
+          </div>
+        </div>
+        <!-- Example card 3 -->
+        <div class="col-md-4">
+          <div class="card game-card h-100">
+            <img src="{{ azul }}" class="card-img-top" alt="Azul">
+            <div class="card-body">
+              <h5 class="card-title">Azul</h5>
+              <p class="card-text">A beautiful tile-placement game where every decision counts.</p>
+            </div>
+          </div>
+        </div>
+        <!-- Add more game cards if you wish -->
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="py-5">
+    <div class="container">
+      <h2 class="text-center mb-5 fw-bold">How It Works</h2>
+      <div class="row row-cols-1 row-cols-md-3 g-4 text-center">
+        <div class="col">
+          <div class="p-4 border rounded-3 h-100 d-flex flex-column align-items-center">
+            <i class="bi bi-search-heart fs-1 text-primary mb-3"></i>
+            <h3 class="h4">1. Browse Games</h3>
+            <p class="mb-0">
+              Explore our community collection of board games and find one you love.
+            </p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="p-4 border rounded-3 h-100 d-flex flex-column align-items-center">
+            <i class="bi bi-cart-check fs-1 text-primary mb-3"></i>
+            <h3 class="h4">2. Request to Borrow</h3>
+            <p class="mb-0">
+              Submit a borrow request, wait for approval, and come to one of three easy pickup
+              locations at UVA!
+            </p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="p-4 border rounded-3 h-100 d-flex flex-column align-items-center">
+            <i class="bi bi-gift fs-1 text-primary mb-3"></i>
+            <h3 class="h4">3. Enjoy & Return</h3>
+            <p class="mb-0">
+              Pick up your game, have fun, and then easily return it when you’re done.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

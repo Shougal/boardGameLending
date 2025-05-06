@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Row for alert messages -->
+    <div class="row mb-3">
+        <div class="col">
+            {% for message in messages %}
+                {% if forloop.last %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Main content row -->
+    <div class="row">
+        <!-- Left column: Game image and details -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <img src="{{ game.get_image_url }}" class="img-fluid rounded mb-3" alt="{{ game.title }}">
+
+                    <h5 class="card-title">Game Details</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Players:</th>
+                            <td>{{ game.min_players }} - {{ game.max_players }}</td>
+                        </tr>
+                        {% if game.playing_time %}
+                        <tr>
+                            <th>Playing Time:</th>
+                            <td>{{ game.playing_time }} minutes</td>
+                        </tr>
+                        {% endif %}
+                        {% if game.complexity %}
+                        <tr>
+                            <th>Complexity:</th>
+                            <td>{{ game.complexity }}/5</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Categories:</th>
+                            <td>
+                                {% for category in categories %}
+                                    <span class="badge bg-secondary">{{ category.name }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Availability:</th>
+                            <td>
+                                {% if game.is_available %}
+                                    <span class="text-success">Available ({{ game.available_copies_count }} copies)</span>
+                                {% else %}
+                                    <span class="text-danger">Currently unavailable</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if available_copies %}
+                        {% regroup available_copies by pickup_location as pickup_groups %}
+                        <tr>
+                          <th>Pickup Locations:</th>
+                          <td>
+                            <ul class="list-unstyled mb-0">
+                              {% for group in pickup_groups %}
+                                <li>
+                                  <!-- first item in the group still has all model methods -->
+                                  <span class="badge bg-info">
+                                    {{ group.list.0.get_pickup_location_display }}
+                                  </span>
+                                </li>
+                              {% endfor %}
+                            </ul>
+                          </td>
+                        </tr>
+                        {% endif %}
+                    </table>
+
+                    <!-- Request to Borrow / Edit links -->
+                    {% if is_authenticated and is_patron and game.is_available %}
+                        <div class="d-grid gap-2 mt-3">
+                            <a href="{% url 'request_borrow' game.pk %}" class="btn btn-primary">Request to Borrow</a>
+                        </div>
+                    {% endif %}
+                    {% if is_authenticated and is_librarian %}
+                        <div class="d-grid gap-2 mt-3">
+                            <a href="{% url 'edit_board_game' game.pk %}" class="btn btn-outline-primary">Edit Game</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right column: Title, description, reviews, review form -->
+        <div class="col-md-8">
+            <h1 class="mb-4">{{ game.title }}</h1>
+
+            <!-- Description card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Description</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ game.description|linebreaks }}</p>
+                </div>
+            </div>
+
+            <!-- Reviews card -->
+            {% if game.reviews.all %}
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Reviews</h5>
+                        {% if game.average_rating %}
+                            <span class="badge bg-warning text-dark">{{ game.average_rating }} / 5</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% for review in game.reviews.all %}
+                            <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                                <div class="d-flex justify-content-between">
+                                    <h6>{{ review.title|default:"Review" }}</h6>
+                                    <div>
+                                        <span class="badge bg-warning text-dark">{{ review.rating }}/5</span>
+                                        <small class="text-muted ms-2">{{ review.created_at|date:"M d, Y" }}</small>
+                                    </div>
+                                </div>
+                                <p class="mb-1">{{ review.comment }}</p>
+                                <small class="text-muted">- {{ review.user.get_full_name }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if is_authenticated and is_patron and has_borrowed %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{% if existing_review %}Edit Your Review{% else %}Write A Review{% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- Notice we check if 'existing_review' is passed from the view;
+                         if it exists, prefill the fields with the user's existing data. -->
+                    <form method="post" action="{% url 'add_review' game.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Rating</label>
+                            <select class="form-select" id="rating" name="rating" required>
+                                <option value="">Select a rating</option>
+                                <option value="5" {% if existing_review and existing_review.rating == 5 %}selected{% endif %}>5 - Excellent</option>
+                                <option value="4" {% if existing_review and existing_review.rating == 4 %}selected{% endif %}>4 - Very Good</option>
+                                <option value="3" {% if existing_review and existing_review.rating == 3 %}selected{% endif %}>3 - Good</option>
+                                <option value="2" {% if existing_review and existing_review.rating == 2 %}selected{% endif %}>2 - Fair</option>
+                                <option value="1" {% if existing_review and existing_review.rating == 1 %}selected{% endif %}>1 - Poor</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="title" 
+                                name="title"
+                                value="{% if existing_review %}{{ existing_review.title }}{% endif %}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Comment</label>
+                            <textarea 
+                                class="form-control" 
+                                id="comment" 
+                                name="comment" 
+                                rows="3"
+                            >{% if existing_review %}{{ existing_review.comment }}{% endif %}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            {% if existing_review %}Update Review{% else %}Submit Review{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

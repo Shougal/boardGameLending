@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+{% load tz %}
+{% block content %}
+<div class="container mt-4">
+    <!-- Profile Info -->
+    <div class="row mb-4">
+        <div class="col-md-4 text-center mb-3 mb-md-0">
+            <div class="profile-picture">
+                {% if user.profile_picture %}
+                    <img src="{{ user.get_profile_picture_url }}" 
+                         alt="Profile Picture"
+                         class="rounded-circle border shadow"
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'images/default-avatar.jpg' %}" 
+                         alt="Default Profile Picture"
+                         class="rounded-circle border shadow"
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-8 d-flex flex-column justify-content-center">
+            <h2 class="fw-bold mb-0">{{ user.given_name }} {{ user.family_name }}</h2>
+            <p class="text-muted mb-2">{{ user.email }}</p>
+            {% timezone "America/New_York" %}
+            <p class="text-muted mb-2">
+                Date Joined: {{ user.date_joined|localtime|date:"M d, Y P" }}
+            </p>
+            {% endtimezone %}
+            <a href="{% url 'edit_profile' %}" class="btn btn-primary btn-sm align-self-start">
+                Edit Profile
+            </a>
+        </div>
+    </div>
+
+    <hr>
+
+    <!--    Borrowing, Borrowing History, Borrow Requests in cards -->
+    <div class="row">
+        <div class="col-12 col-lg-6 mb-4">
+            <!-- Currently Borrowing -->
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Currently Borrowing</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Game</th>
+                                    <th>Borrowed On</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in active_loans %}
+                                <tr>
+                                    <td>{{ loan.game_copy.game.title }}</td>
+                                    <td>{{ loan.borrowed_on|date:"F j, Y" }}</td>
+                                    <td>{{ loan.due_date|date:"F j, Y" }}</td>
+                                    <td>
+                                        {% if loan.due_date.date < today %}
+                                            <span class="text-danger">Overdue</span>
+                                        {% else %}
+                                            <span class="text-warning">Not Returned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form action="{% url 'return_game' loan.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <button class="btn btn-sm btn-primary">
+                                                Return
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        No active borrowings.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6 mb-4">
+            <!-- Borrowing History -->
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Borrowing History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Game</th>
+                                    <th>Borrowed On</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in previous_loans %}
+                                <tr>
+                                    <td>{{ loan.game_copy.game.title }}</td>
+                                    <td>{{ loan.borrowed_on|date:"F j, Y" }}</td>
+                                    <td>{{ loan.due_date|date:"F j, Y" }}</td>
+                                    <td>
+                                        {% if loan.returned %}
+                                            <span class="text-success">Returned</span>
+                                        {% elif loan.due_date.date < today %}
+                                            <span class="text-danger">Overdue</span>
+                                        {% else %}
+                                            <span class="text-warning">Not Returned</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">
+                                        No borrowing history found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Third row (full-width on large screens, stacked on small): Borrow Requests & Collection Access Requests -->
+        <div class="col-12 col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">My Borrow Requests</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Game</th>
+                                    <th>Status</th>
+                                    <th>Requested On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in borrow_requests %}
+                                <tr>
+                                    <td>{{ req.game.title }}</td>
+                                    <td>
+                                        {% if req.status|lower == 'pending' %}
+                                            <span class="text-warning">Pending</span>
+                                        {% elif req.status|lower == 'approved' %}
+                                            <span class="text-success">Approved</span>
+                                        {% elif req.status|lower == 'denied' %}
+                                            <span class="text-danger">Denied</span>
+                                        {% else %}
+                                            <span class="text-muted">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ req.requested_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">
+                                        No request history found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">My Collection Access Requests</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Collection</th>
+                                    <th>Status</th>
+                                    <th>Requested On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in collection_requests %}
+                                <tr>
+                                    <td>{{ req.collection.title }}</td>
+                                    <td>
+                                        {% if req.status|lower == 'pending' %}
+                                            <span class="text-warning">Pending</span>
+                                        {% elif req.status|lower == 'approved' %}
+                                            <span class="text-success">Approved</span>
+                                        {% elif req.status|lower == 'denied' %}
+                                            <span class="text-danger">Denied</span>
+                                        {% else %}
+                                            <span class="text-muted">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ req.requested_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No collection access requests.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>        
+    </div>
+</div>
+{% endblock %}

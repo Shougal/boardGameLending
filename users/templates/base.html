@@ -1,0 +1,108 @@
+{% load socialaccount %}
+{% load django_bootstrap5 %}
+{% load static %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelf Share - Board Game Lending Library</title>
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .hero-section {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1585504198199-20277593b94f?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Ym9hcmQlMjBnYW1lfGVufDB8fDB8fHwy') center/cover;
+            height: 70vh;
+        }
+        .game-card img {
+            height: 300px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary py-3">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-share"></i> Shelf Share
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active text-white{% endif %}" href="/">Home</a>
+                    </li>
+                    
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == user.get_absolute_url %}active text-white{% endif %}" href="{{ user.get_absolute_url }}">My Profile</a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/catalogue' in request.path %}active text-white{% endif %}" href="/catalogue">Browse Games</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/collections' in request.path %}active text-white{% endif %}" href="/collections">Browse Collections</a>
+                    </li>
+                    
+                    {% if is_authenticated and is_librarian %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/board-games' in request.path %}active text-white{% endif %}" href="/board-games">Manage Catalogue</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'manage_requests' %}active text-white{% endif %}" href="{% url 'manage_requests' %}">Manage Requests</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/promote_users' in request.path %}active text-white{% endif %}" href="/promote_users">Manage Users</a>
+                    </li>
+                    {% endif %}                                            
+                </ul>
+                <ul class="d-flex navbar-nav">
+                    {% if is_authenticated %}
+                    <li class="nav-item">
+                        <a href="/logout" class="btn btn-light">
+                            Log Out
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a href="{% provider_login_url 'google' %}?next=/" class="btn btn-light">
+                            <i class="bi bi-google me-2"></i>Login with Google
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow-1">
+      {% block content %}
+      <!-- Content from child templates will go here -->
+      {% endblock %}
+    </main>
+
+    <footer class="bg-dark text-white mt-auto">
+        <div class="container py-4">
+            <div class="row">
+                <div class="text-center">
+                    <h5>About Shelf Share</h5>
+                    <p>Connecting board game enthusiasts through sharing</p>
+                </div>
+            </div>
+            <div class="text-center mt-4 pt-3 border-top">
+                <p>&copy; 2025 Shelf Share. All rights reserved.</p>
+                <p>Disclaimer: This system is a class project, the system is not monitored, and no real information should be submitted.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
