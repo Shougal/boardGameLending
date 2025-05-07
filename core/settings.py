@@ -314,7 +314,7 @@ ACCOUNT_FORMS = {"signup": "your_app.forms.DisabledSignupForm"}
 # AWS Storage Settings
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = "cs-3240-board-game-bucket"
+AWS_STORAGE_BUCKET_NAME = 'board-game-lending-shoug'
 AWS_S3_REGION_NAME = "us-east-1"
 
 
